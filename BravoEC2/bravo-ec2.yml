@@ -1,0 +1,176 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+    This template deploys:
+    1 bastion instance in AZ1 Public Subnet1, referancing the VPC and subnets created in the bravo-vpc stack.
+    3 private servers, one in private subnet in each AZ(1-3) each server is of a different image type one Windows, RedHat, Ubuntu (default is T2.micro 64bit)
+    1 Security Group for the web servers to access the net and the bastion instance
+    Notes: Added WebSG output for use on AutoScalingGroup
+Parameters:
+  BravoVPCId:
+    Description: VPC ID to create security group in
+    Type: String
+  PublicSubnet1Id:
+    Description: Subnet to create bastion instance
+    Type: String
+  PrivateSubnet1Id:
+    Description: Subnet to create ec2 instance in
+    Type: String
+  PrivateSubnet2Id:
+    Description: Subnet to create ec2 instance in
+    Type: String
+  PrivateSubnet3Id:
+    Description: Subnet to create ec2 instance in
+    Type: String
+
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues:
+      - t1.micro
+      - t2.nano
+      - t2.micro
+      - t2.small
+    ConstraintDescription: must be a valid EC2 instance type.
+
+Mappings:
+  AWSInstanceType2Arch:
+    t1.micro:
+      Arch: HVM64
+    t2.nano:
+      Arch: HVM64
+    t2.micro:
+      Arch: HVM64
+    t2.small:
+      Arch: HVM64
+  AWSRegionArch2AMI:
+    eu-west-1:
+      Bastion: ami-05bc70c954e6fbaa3
+      Windows: ami-00b49e2d0e1fc7fad
+      RedHat: ami-04facb3ed127a2eb6
+      Ubuntu: ami-06358f49b5839867c
+
+Resources:
+  BastionAZ1:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !FindInMap
+          - AWSRegionArch2AMI
+          - !Ref 'AWS::Region'
+          - Bastion
+      SubnetId: !Ref PublicSubnet1Id
+      SecurityGroupIds: [!Ref BastionSG]
+      KeyName: bravo
+      Tags:
+        - Key: Email
+          Value: giles.morgan@uk.fujitsu.com
+        - Key: Name
+          Value: Bastion
+
+  PrivSrvAZ1sub1:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !FindInMap
+          - AWSRegionArch2AMI
+          - !Ref 'AWS::Region'
+          - Windows
+      SubnetId: !Ref PrivateSubnet1Id
+      Tags:
+        - Key: Email
+          Value: giles.morgan@uk.fujitsu.com
+        - Key: Name
+          Value: Private-SRV-AZ1
+
+  PrivSrvAZ2sub2:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !FindInMap
+          - AWSRegionArch2AMI
+          - !Ref 'AWS::Region'
+          - RedHat
+      SubnetId: !Ref PrivateSubnet2Id
+      Tags:
+        - Key: Email
+          Value: giles.morgan@uk.fujitsu.com
+        - Key: Name
+          Value: Private-SRV-AZ2
+
+  PrivSrvAZ3sub3:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref InstanceType
+      ImageId: !FindInMap
+          - AWSRegionArch2AMI
+          - !Ref 'AWS::Region'
+          - Ubuntu
+      SubnetId: !Ref PrivateSubnet3Id
+      Tags:
+        - Key: Email
+          Value: giles.morgan@uk.fujitsu.com
+        - Key: Name
+          Value: Private-SRV-AZ3
+
+  BastionSG:
+   Type: AWS::EC2::SecurityGroup
+   Properties:
+     GroupDescription: Allow External access to the Bastion Instance on port 22
+     GroupName: External-Bastion-Access
+     VpcId: !Ref BravoVPCId
+     SecurityGroupIngress:
+       - IpProtocol: tcp
+         FromPort: 22
+         ToPort: 22
+         CidrIp: 0.0.0.0/0
+     Tags:
+       - Key: Email
+         Value: giles.morgan@uk.fujitsu.com
+
+  WebSG:
+   Type: AWS::EC2::SecurityGroup
+   Properties:
+     GroupDescription: Allow web servers HTTP access to the internet and port 22 access from the Bastion instance
+     GroupName: Web-Access-and-Bastion
+     VpcId: !Ref BravoVPCId
+     SecurityGroupIngress:
+       - IpProtocol: tcp
+         FromPort: 80
+         ToPort: 80
+         CidrIp: 0.0.0.0/0
+       - IpProtocol: tcp
+         FromPort: 443
+         ToPort: 443
+         CidrIp: 0.0.0.0/0
+       - IpProtocol: tcp
+         FromPort: 22
+         ToPort: 22
+         SourceSecurityGroupId: !Ref BastionSG
+     Tags:
+       - Key: Email
+         Value: giles.morgan@uk.fujitsu.com
+
+
+Outputs:
+  WebSecurityGroupId:
+    Description: Web Security Group Id
+    Value: !Ref WebSG
+  BastionId:
+    Description: InstanceId of the newly created Bastion instance
+    Value: !Ref BastionAZ1
+  BastionPrivateIP:
+    Description: Private IP of Bastion instance
+    Value:
+      Fn::GetAtt:
+        - BastionAZ1
+        - PrivateIp
+  PrivSrvAZ1sub1:
+    Description: InstanceId of the newly created Windows instance
+    Value: !Ref PrivSrvAZ1sub1
+  PrivSrvAZ1sub2:
+    Description: InstanceId of the newly created RedHat instance
+    Value: !Ref PrivSrvAZ2sub2
+  PrivSrvAZ1sub3:
+    Description: InstanceId of the newly created Ubuntu instance
+    Value: !Ref PrivSrvAZ3sub3

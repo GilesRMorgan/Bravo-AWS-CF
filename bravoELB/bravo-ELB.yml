@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+    This template deploys:
+      1
+
+Parameters:
+  WebSecurityGroupId:
+    Description: Web Servers Security Group Name
+    Type: String
+  PublicSubnet1Id:
+    Description: Subnet to create AutoScaling Instances in (across)
+    Type: String
+  PublicSubnet2Id:
+    Description: Subnet to create AutoScaling Instances in (across)
+    Type: String
+  PublicSubnet3Id:
+    Description: Subnet to create AutoScaling Instances in (across)
+    Type: String
+
+Resources:
+  bravoWebELB:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Listeners:
+        - InstancePort: '80'
+          InstanceProtocol: HTTP
+          LoadBalancerPort: '80'
+          Protocol: HTTP
+      LoadBalancerName: bravoWebloadbalancer
+      Scheme: internet-facing
+      SecurityGroups: [!Ref WebSecurityGroupId]
+      HealthCheck:
+        HealthyThreshold: 2
+        Interval: 10
+        Target: "TCP:80"
+        Timeout: 5
+        UnhealthyThreshold: 2
+      Subnets:
+        - !Ref PublicSubnet1Id
+        - !Ref PublicSubnet2Id
+        - !Ref PublicSubnet3Id
+      Tags:
+        - Key: Email
+          Value: giles.morgan@uk.fujitsu.com
+
+Outputs:
+  WebLoadBalancer:
+    Description: Web servers loadbalancer name, to be used within AutoScaling Group
+    Value: !Ref bravoWebELB

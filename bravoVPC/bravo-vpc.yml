@@ -1,0 +1,305 @@
+
+
+Description: >
+    This template deploys an AWS VPC with the following:
+    3 public and 3 private subnets spread across 3 Availabilty Zones.
+    1 Internet Gateway, with a default route on the public subnets.
+    3 Elastic IP's EIP which will be used for the NatGateway instances
+    3 NAT Gateways (one in each Public subnet in each AZ), and default routes for them in the private subnets
+
+Parameters:
+    StackName:
+        Description: An stack name that will be prefixed to resource names
+        Type: String
+        Default: bravo
+
+    BravoVPCCIDR:
+        Description: Please enter the IP range (CIDR notation) for this VPC
+        Type: String
+        Default: 192.168.0.0/16
+
+    PublicSubnet1CIDR:
+        Description: Please enter the IP range (CIDR notation) for the public subnet in the first Availability Zone
+        Type: String
+        Default: 192.168.54.0/24
+
+    PublicSubnet2CIDR:
+        Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+        Type: String
+        Default: 192.168.55.0/24
+
+    PublicSubnet3CIDR:
+        Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+        Type: String
+        Default: 192.168.56.0/24
+
+    PrivateSubnet1CIDR:
+        Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+        Type: String
+        Default: 192.168.57.0/24
+
+    PrivateSubnet2CIDR:
+        Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+        Type: String
+        Default: 192.168.58.0/24
+
+    PrivateSubnet3CIDR:
+        Description: Please enter the IP range (CIDR notation) for the public subnet in the second Availability Zone
+        Type: String
+        Default: 192.168.59.0/24
+
+Resources:
+
+    BravoVPC:
+        Type: AWS::EC2::VPC
+        Properties:
+            CidrBlock: !Ref BravoVPCCIDR
+            EnableDnsSupport: true
+            EnableDnsHostnames: true
+            InstanceTenancy: default
+            Tags:
+            - Key: Name
+              Value: !Join ['', [!Ref StackName, '-VPC']]
+            - Key: Stack
+              Value: !Ref StackName
+            - Key: Email
+              Value: giles.morgan@uk.fujitsu.com
+
+    InternetGateway:
+        Type: AWS::EC2::InternetGateway
+        Properties:
+            Tags:
+              - Key: Name
+                Value: !Join ['', [!Ref StackName, '-IGW']]
+              - Key: Stack
+                Value: !Ref StackName
+              - Key: Email
+                Value: giles.morgan@uk.fujitsu.com
+
+    InternetGatewayAttachment:
+        Type: AWS::EC2::VPCGatewayAttachment
+        Properties:
+            VpcId: !Ref BravoVPC
+            InternetGatewayId: !Ref InternetGateway
+
+    PublicSubnet1:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+            VpcId: !Ref BravoVPC
+            AvailabilityZone: !Select [0, !GetAZs ""]
+            CidrBlock: !Ref PublicSubnet1CIDR
+            MapPublicIpOnLaunch: true
+            Tags:
+              - Key: Name
+                Value: !Join ['', [!Ref StackName,' ','Public Subnet (AZ1)']]
+              - Key: Stack
+                Value: !Ref StackName
+              - Key: Email
+                Value: giles.morgan@uk.fujitsu.com
+
+    PrivateSubnet1:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+            VpcId: !Ref BravoVPC
+            AvailabilityZone: !Select [0, !GetAZs ""]
+            CidrBlock: !Ref PrivateSubnet1CIDR
+            MapPublicIpOnLaunch: true
+            Tags:
+              - Key: Name
+                Value: !Join ['', [!Ref StackName,' ','Private Subnet (AZ1)']]
+              - Key: Stack
+                Value: !Ref StackName
+              - Key: Email
+                Value: giles.morgan@uk.fujitsu.com
+
+    PublicSubnet2:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+            VpcId: !Ref BravoVPC
+            AvailabilityZone: !Select [1, !GetAZs ""]
+            CidrBlock: !Ref PublicSubnet2CIDR
+            MapPublicIpOnLaunch: true
+            Tags:
+              - Key: Name
+                Value: !Join ['', [!Ref StackName,' ','Public Subnet (AZ1)']]
+              - Key: Stack
+                Value: !Ref StackName
+              - Key: Email
+                Value: giles.morgan@uk.fujitsu.com
+
+    PrivateSubnet2:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+            VpcId: !Ref BravoVPC
+            AvailabilityZone: !Select [1, !GetAZs ""]
+            CidrBlock: !Ref PrivateSubnet2CIDR
+            MapPublicIpOnLaunch: true
+            Tags:
+              - Key: Name
+                Value: !Join ['', [!Ref StackName, ' ','Private Subnet (AZ2)']]
+              - Key: Stack
+                Value: !Ref StackName
+              - Key: Email
+                Value: giles.morgan@uk.fujitsu.com
+
+    PublicSubnet3:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+            VpcId: !Ref BravoVPC
+            AvailabilityZone: !Select [2, !GetAZs ""]
+            CidrBlock: !Ref PublicSubnet3CIDR
+            MapPublicIpOnLaunch: true
+            Tags:
+              - Key: Name
+                Value: !Join ['', [!Ref StackName,' ','Public Subnet (AZ3)']]
+              - Key: Stack
+                Value: !Ref StackName
+              - Key: Email
+                Value: giles.morgan@uk.fujitsu.com
+
+    PrivateSubnet3:
+        Type: 'AWS::EC2::Subnet'
+        Properties:
+            VpcId: !Ref BravoVPC
+            AvailabilityZone: !Select [2, !GetAZs ""]
+            CidrBlock: !Ref PrivateSubnet3CIDR
+            MapPublicIpOnLaunch: true
+            Tags:
+              - Key: Name
+                Value: !Join ['', [!Ref StackName, ' ','Private Subnet (AZ3)']]
+              - Key: Stack
+                Value: !Ref StackName
+              - Key: Email
+                Value: giles.morgan@uk.fujitsu.com
+
+    PublicRouteTable:
+        Type: AWS::EC2::RouteTable
+        Properties:
+            VpcId: !Ref BravoVPC
+            Tags:
+              - Key: Name
+                Value: !Join ['', [!Ref StackName,' ','Public Route']]
+              - Key: Stack
+                Value: !Ref StackName
+              - Key: Email
+                Value: giles.morgan@uk.fujitsu.com
+
+    PublicRoute:
+        Type: AWS::EC2::Route
+        DependsOn: InternetGatewayAttachment
+        Properties:
+            RouteTableId: !Ref PublicRouteTable
+            DestinationCidrBlock: 0.0.0.0/0
+            GatewayId: !Ref InternetGateway
+
+    PublicSubnet1RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            RouteTableId: !Ref PublicRouteTable
+            SubnetId: !Ref PublicSubnet1
+
+    PublicSubnet2RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            RouteTableId: !Ref PublicRouteTable
+            SubnetId: !Ref PublicSubnet2
+
+    PublicSubnet3RouteTableAssociation:
+        Type: AWS::EC2::SubnetRouteTableAssociation
+        Properties:
+            RouteTableId: !Ref PublicRouteTable
+            SubnetId: !Ref PublicSubnet3
+
+    NatGatewayAZ1:
+      Type: AWS::EC2::NatGateway
+      Properties:
+          AllocationId:
+            Fn::GetAtt:
+              - EIP1AZ1
+              - AllocationId
+          SubnetId: !Ref PublicSubnet1
+          Tags:
+            - Key: Email
+              Value: giles.morgan@uk.fujitsu.com
+    EIP1AZ1:
+      DependsOn: InternetGatewayAttachment
+      Type: AWS::EC2::EIP
+      Properties:
+        Domain: BravoVPC
+
+    NatGatewayAZ2:
+      Type: AWS::EC2::NatGateway
+      Properties:
+          AllocationId:
+            Fn::GetAtt:
+              - EIP1AZ2
+              - AllocationId
+          SubnetId: !Ref PublicSubnet2
+          Tags:
+            - Key: Email
+              Value: giles.morgan@uk.fujitsu.com
+    EIP1AZ2:
+      DependsOn: InternetGatewayAttachment
+      Type: AWS::EC2::EIP
+      Properties:
+        Domain: BravoVPC
+
+    NatGatewayAZ3:
+      Type: AWS::EC2::NatGateway
+      Properties:
+          AllocationId:
+            Fn::GetAtt:
+              - EIP1AZ3
+              - AllocationId
+          SubnetId: !Ref PublicSubnet3
+          Tags:
+            - Key: Email
+              Value: giles.morgan@uk.fujitsu.com
+    EIP1AZ3:
+      DependsOn: InternetGatewayAttachment
+      Type: AWS::EC2::EIP
+      Properties:
+        Domain: BravoVPC
+
+Outputs:
+    BravoVPC:
+        Description: A reference to the created VPC
+        Value: !Ref BravoVPC
+        Export:
+            Name: !Sub '${StackName}-VPC'
+
+    PublicSubnet1:
+        Description: A reference to the public subnet in the 1st Availability Zone
+        Value: !Ref PublicSubnet1
+        Export:
+            Name: !Sub '${StackName}-PublicSubnet1'
+
+    PrivateSubnet1:
+        Description: A reference to the private subnet in the 1st Availability Zone
+        Value: !Ref PrivateSubnet1
+        Export:
+            Name: !Sub '${StackName}-PrivateSubnet1'
+
+    PublicSubnet2:
+        Description: A reference to the public subnet in the 2nd Availability Zone
+        Value: !Ref PublicSubnet2
+        Export:
+            Name: !Sub '${StackName}-PublicSubnet2'
+
+    PrivateSubnet2:
+        Description: A reference to the private subnet in the 2nd Availability Zone
+        Value: !Ref PrivateSubnet2
+        Export:
+            Name: !Sub '${StackName}-PrivateSubnet2'
+
+    PublicSubnet3:
+        Description: A reference to the public subnet in the 3rd Availability Zone
+        Value: !Ref PublicSubnet3
+        Export:
+            Name: !Sub '${StackName}-PublicSubnet3'
+
+    PrivateSubnet3:
+        Description: A reference to the private subnet in the 3rd Availability Zone
+        Value: !Ref PrivateSubnet3
+        Export:
+            Name: !Sub '${StackName}-PrivateSubnet3'

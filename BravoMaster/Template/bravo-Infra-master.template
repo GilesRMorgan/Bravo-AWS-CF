@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion : 2010-09-09
+
+Description: >
+
+    This template deploys a my "Bravo VPC" , "Bravo ec2" & "Bravo AutoScaling" stacks
+
+Resources:
+    BravoMasterVPC:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://cns-giles.s3-eu-west-1.amazonaws.com/bravo-vpc.yml
+
+    BravoMasterEC2:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://cns-giles.s3-eu-west-1.amazonaws.com/bravo-ec2.yml
+            Parameters:
+              PublicSubnet1Id: !GetAtt BravoMasterVPC.Outputs.PublicSubnet1
+              PrivateSubnet1Id: !GetAtt BravoMasterVPC.Outputs.PrivateSubnet1
+              PrivateSubnet2Id: !GetAtt BravoMasterVPC.Outputs.PrivateSubnet2
+              PrivateSubnet3Id: !GetAtt BravoMasterVPC.Outputs.PrivateSubnet3
+              BravoVPCId:  !GetAtt BravoMasterVPC.Outputs.BravoVPC
+
+    BravoMasterELB:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://cns-giles.s3-eu-west-1.amazonaws.com/bravo-ELB.yml
+            Parameters:
+              WebSecurityGroupId: !GetAtt BravoMasterEC2.Outputs.WebSecurityGroupId
+              PublicSubnet1Id: !GetAtt BravoMasterVPC.Outputs.PublicSubnet1
+              PublicSubnet2Id: !GetAtt BravoMasterVPC.Outputs.PublicSubnet2
+              PublicSubnet3Id: !GetAtt BravoMasterVPC.Outputs.PublicSubnet3
+
+    BravoMasterAutoScaling:
+        Type: AWS::CloudFormation::Stack
+        Properties:
+            TemplateURL: https://cns-giles.s3-eu-west-1.amazonaws.com/bravo-AutoScaling.yml
+            Parameters:
+              WebLoadBalancer: !GetAtt BravoMasterELB.Outputs.WebLoadBalancer
+              WebSecurityGroupId: !GetAtt BravoMasterEC2.Outputs.WebSecurityGroupId
+              PublicSubnet1Id: !GetAtt BravoMasterVPC.Outputs.PublicSubnet1
+              PublicSubnet2Id: !GetAtt BravoMasterVPC.Outputs.PublicSubnet2
+              PublicSubnet3Id: !GetAtt BravoMasterVPC.Outputs.PublicSubnet3

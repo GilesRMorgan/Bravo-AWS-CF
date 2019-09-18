@@ -1,0 +1,70 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+    This template deploys:
+      1 AutoScaling LaunchTemplate
+      1 AutoScaling Group which manages "3 x WebSevers" which reside in the public subnets for each AZ
+
+Parameters:
+  WebLoadBalancer:
+    Description: WebLoadBalancer name for use within AutoScalingGroup
+    Type: String
+  WebSecurityGroupId:
+    Description: Web Servers Security Group Name
+    Type: String
+  PublicSubnet1Id:
+    Description: Subnet to create AutoScaling Instances in (across)
+    Type: String
+  PublicSubnet2Id:
+    Description: Subnet to create AutoScaling Instances in (across)
+    Type: String
+  PublicSubnet3Id:
+    Description: Subnet to create AutoScaling Instances in (across)
+    Type: String
+
+Resources:
+  bravoWebSrvLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: WebSrvLaunchTemplate
+      LaunchTemplateData:
+        ImageId: ami-0ce71448843cb18a1
+        InstanceType: t2.micro
+        KeyName: bravoWeb
+        SecurityGroupIds: [!Ref WebSecurityGroupId]
+        TagSpecifications:
+          - ResourceType: instance
+            Tags:
+            - Key: Name
+              Value: Web-SRV
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            yum update -y
+            amazon-linux-extras install -y lamp-mariadb10.2-php7.2 php7.2
+            yum install -y httpd mariadb-server
+            systemctl start httpd
+            systemctl enable httpd
+            usermod -a -G apache ec2-user
+            chown -R ec2-user:apache /var/www
+            chmod 2775 /var/www
+            find /var/www -type d -exec chmod 2775 {} \;
+            find /var/www -type f -exec chmod 0664 {} \;
+            echo "<?php phpinfo(); ?>" > /var/www/html/phpinfo.php
+            systemctl stop firewalld
+            systemctl disable firewalld
+
+  bravoWebServerGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchTemplate:
+          LaunchTemplateId: !Ref bravoWebSrvLaunchTemplate
+          Version: '1'
+      LoadBalancerNames:
+        - !Ref WebLoadBalancer
+      VPCZoneIdentifier:
+        - !Ref PublicSubnet1Id
+        - !Ref PublicSubnet2Id
+        - !Ref PublicSubnet3Id
+      AutoScalingGroupName: bravoWebServerAutoScalingGroup
+      MinSize: '3'
+      MaxSize: '3'
