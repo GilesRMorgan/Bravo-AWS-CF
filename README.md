@@ -1,2 +1,2 @@
 # Bravo-AWS-CF
-Exploring CF (cloudformation) within AWS
+Exploring CF (cloudformation) within AWS.
