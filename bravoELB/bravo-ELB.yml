@@ -31,7 +31,7 @@ Resources:
       SecurityGroups: [!Ref WebSecurityGroupId]
       HealthCheck:
         HealthyThreshold: 2
-        Interval: 11
+        Interval: 12
         Target: "TCP:80"
         Timeout: 5
         UnhealthyThreshold: 2
